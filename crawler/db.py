@@ -1,15 +1,19 @@
 from urllib.parse import quote_plus
 
-import pymongo, os
+import os
+import sys
+
+import pymongo
 from dotenv import load_dotenv
 from pymongo import MongoClient
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from crawler.scraper import *
 
-load_dotenv()
 
 def connect_to_MongoDB(username: str, password: str, cluster: str):
-    connection_string = f"mongodb+srv://{quote_plus(str(username))}:{quote_plus(str(password))}@{cluster}/"
+    connection_string = f"mongodb+srv://{username}:{password}@{cluster}.mongodb.net/"
     try:
         client = MongoClient(connection_string)
         client.admin.command("ping")
@@ -20,7 +24,7 @@ def connect_to_MongoDB(username: str, password: str, cluster: str):
     pass 
 
 
-def insert_data_to_database(username: str, password: str, cluster: str, ) -> None:
+def insert_data_to_database(username: str, password: str, cluster: str) -> None:
     client = connect_to_MongoDB(username, password, cluster)
     db = client[os.getenv("DEFAULT_DB", "crawl_project")]    
     collection = db[os.getenv("DEFAULT_COLLECTION", "books")]
@@ -42,11 +46,4 @@ def insert_data_to_database(username: str, password: str, cluster: str, ) -> Non
 
 
 if __name__ == "__main__":
-    from utils.env_utils import get_env, load_env
-
-    load_env()
-    insert_data_to_database(
-        get_env("MONGO_USERNAME"),
-        get_env("MONGO_PASSWORD"),
-        get_env("MONGO_CLUSTER"),
-    )
+    insert_data_to_database(username="brinto", password="Brinto_says_%22Hi_There%22", cluster="cluster0.uy9kta3")

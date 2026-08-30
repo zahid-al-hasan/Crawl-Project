@@ -20,6 +20,8 @@ from apscheduler.schedulers.blocking import BlockingScheduler
 from bs4 import BeautifulSoup
 from pymongo import MongoClient
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from utils.env_utils import get_env, load_env
 
 try:

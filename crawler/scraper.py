@@ -69,7 +69,7 @@ def get_book_data_from_book_link(book_link: str) -> dict:
 
 def collect_all_book_data() -> list[dict]:  
     all_book_data = []
-    pages_to_work_with = 2
+    pages_to_work_with = 1
     for page_number in range(pages_to_work_with):
         print(f"\nCurrently Working with page {page_number + 1} : \n")
         current_page_link = initial_link_for_books + f"page-{page_number + 1}.html"
