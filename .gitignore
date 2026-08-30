@@ -1,0 +1,19 @@
+# Secrets & local config
+.env
+
+# Runtime artifacts
+logs/
+*.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
