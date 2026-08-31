@@ -1,9 +1,8 @@
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-import requests, datetime, os
+import requests, datetime, os, sys
 from pydantic import BaseModel
 
-import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.env_utils import load_env
 
