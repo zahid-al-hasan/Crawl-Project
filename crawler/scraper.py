@@ -19,6 +19,15 @@ initial_link_for_books = os.getenv("INITIAL_URL")
 print(f"{index_url}\n{initial_link_for_books}")
 
 
+rate_map = {
+    "One" : 1,
+    "Two" : 2,
+    "Three" : 3,
+    "Four" : 4,
+    "Five" : 5
+}
+
+
 class BookMetadata(BaseModel):
     timestamp : str
     status : int
@@ -34,11 +43,11 @@ class Book(BaseModel):
     availability : str
     review_count : int
     image_url : str
-    star_rating : str
+    star_rating : int
     metadata : BookMetadata
 
     def __str__(self):
-        return f"Name : {self.name}\ncategory : {self.category}\nprice : {self.euro_price_without_tax}\n"
+        return f"Name : {self.name}\ncategory : {self.category}\nprice : {self.euro_price_without_tax}\nrating : {self.star_rating}\nreviews : {self.review_count}"
     
 
 
@@ -70,14 +79,14 @@ class MyCrawler():
 
         book = Book(
             name = guarded(lambda: book_soup.find('div', class_='col-sm-6 product_main').find('h1').text.strip()),
-            description =  guarded(lambda: book_soup.find('p', class_= None).text.strip()),
+            description = guarded(lambda: book_soup.find('p', class_= None).text.strip()),
             category = guarded(lambda: book_soup.find('ul', class_='breadcrumb').find_all('li')[2].text.strip()),
             euro_price_with_tax = float(guarded(lambda: other_product_info[3].find('td').text[2:])),
             euro_price_without_tax = float(guarded(lambda: other_product_info[2].find('td').text[2:])),
             availability = guarded(lambda: other_product_info[5].find('td').text.strip()),
             review_count = int(guarded(lambda: other_product_info[6].find('td').text.strip())),
             image_url = urljoin(index_url, guarded(lambda: book_soup.find('div', class_='item active').find('img')['src'])),
-            star_rating = guarded(lambda: book_soup.find('div', class_='col-sm-6 product_main').find_all('p')[2]['class'][1]),
+            star_rating = rate_map[guarded(lambda: book_soup.find('div', class_='col-sm-6 product_main').find_all('p')[2]['class'][1])],
 
             metadata = BookMetadata(
                 timestamp = datetime.datetime.now().__str__(),

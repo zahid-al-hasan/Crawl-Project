@@ -9,11 +9,6 @@ from crawler.scraper import *
 
 load_env()
 
-
-DB = os.getenv("DEFAULT_DB", "crawl_project")
-COLLECTION = os.getenv("DEFAULT_COLLECTION", "books")
-
-
 class MyMongoDB():
     def __init__(self, username: str, password: str, cluster: str):
         connection_string = f"mongodb+srv://{username}:{password}@{cluster}.mongodb.net/"
@@ -27,6 +22,9 @@ class MyMongoDB():
 
 
     def insert_data_to_database(self) -> None:
+        DB = os.getenv("DEFAULT_DB")
+        COLLECTION = os.getenv("DEFAULT_COLLECTION")
+
         db = self.client[DB]
         collection = self.client[DB][COLLECTION]
 
