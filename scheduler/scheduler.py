@@ -28,6 +28,7 @@ class MyScheduler:
             my_db.detect_changes,
             "interval",
             hours=interval_hours,
+            next_run_time=datetime.datetime.now()
         )
         # scheduler.add_listener(job_listener, EVENT_JOB_EXECUTED | EVENT_JOB_ERROR)
         print(f"Scheduler starting. Checking every {interval_hours:g} hour(s). Press Ctrl+C to stop.")
@@ -37,10 +38,13 @@ class MyScheduler:
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-
 if __name__ == "__main__":
     load_env()
 
-    my_db = MyMongoDB(username="brinto", password="Brinto_says_%22Hi_There%22", cluster="cluster0.uy9kta3")
+    username = os.getenv("UNAME")
+    password = os.getenv("PASS")
+    cluster = os.getenv("CLUSTER")
+    my_db = MyMongoDB(username, password, cluster)
+
     scheduler = MyScheduler()
     scheduler.run_scheduler(my_db)

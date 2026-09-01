@@ -98,5 +98,9 @@ class MyMongoDB():
 
 if __name__ == "__main__":
     load_env()
-    my_db = MyMongoDB(username="brinto", password="Brinto_says_%22Hi_There%22", cluster="cluster0.uy9kta3")
+
+    username = os.getenv("UNAME")
+    password = os.getenv("PASS")
+    cluster = os.getenv("CLUSTER")
+    my_db = MyMongoDB(username, password, cluster)
     my_db.insert_data_to_database()
