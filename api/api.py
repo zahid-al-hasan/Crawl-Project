@@ -52,5 +52,5 @@ def get_book_by_id(book_id: str):
 
 @app.get("/changes")
 def get_changes():
-
+    
     pass

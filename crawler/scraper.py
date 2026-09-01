@@ -6,17 +6,12 @@ from pydantic import BaseModel
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.env_utils import load_env
 
-load_env()
 
 def guarded(fn, default="NULL"):
     try:
         return fn()
     except:
         return default
-
-index_url = os.getenv("INDEX_URL")
-initial_link_for_books = os.getenv("INITIAL_URL")
-print(f"{index_url}\n{initial_link_for_books}")
 
 
 rate_map = {
@@ -26,6 +21,12 @@ rate_map = {
     "Four" : 4,
     "Five" : 5
 }
+
+load_env()
+
+index_url = os.getenv("INDEX_URL")
+initial_link_for_books = os.getenv("INITIAL_URL")
+
 
 
 class BookMetadata(BaseModel):

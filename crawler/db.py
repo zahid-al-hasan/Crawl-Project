@@ -7,8 +7,12 @@ from utils.env_utils import load_env
 
 from crawler.scraper import *
 
-load_env()
+class Log(BaseModel):
+    timestamp : str
+    content : str
 
+
+    
 class MyMongoDB():
     def __init__(self, username: str, password: str, cluster: str):
         connection_string = f"mongodb+srv://{username}:{password}@{cluster}.mongodb.net/"
@@ -42,9 +46,57 @@ class MyMongoDB():
         else:
             print("Oops, need to investigate!\n")
 
-        self.client.close()
+
+
+    def detect_changes(self):
+        DB = os.getenv("DEFAULT_DB")
+        COLLECTION = os.getenv("DEFAULT_COLLECTION")
+        LOG = os.getenv("LOG_COLLECTION")
+
+        db = self.client[DB]
+        collection = db[COLLECTION]
+        logs = db[LOG]
+
+        existing_url_set = set(collection.distinct("metadata.source_url"))
+
+        crawler = MyCrawler()
+        all_book_data = collect_all_book_data(crawler)
+
+        new_books = [b for b in all_book_data if b.metadata.source_url not in existing_url_set]
+        for book_data in new_books:
+            collection.insert_one(book_data.model_dump())
+
+            new_log_content = f"New book added. Book name : {book_data.name}, Category : {book_data.category}, url : {book_data.metadata.source_url}"
+            new_log = Log(timestamp=datetime.datetime.now().__str__(), content=new_log_content)
+            logs.insert_one(new_log.model_dump())
+            pass
+
+
+        modified_books = set()
+        keys_to_inspect = os.getenv("KEYS_TO_INSPECT")
+        keys_to_inspect = [key.strip() for key in keys_to_inspect.split(",")]
+
+        for b in all_book_data:
+            if b.metadata.source_url in existing_url_set:
+                existing_book = collection.find_one({"metadata.source_url": b.metadata.source_url})
+                if existing_book is None:
+                    continue
+                for key in keys_to_inspect:
+                    if getattr(b, key) != existing_book.get(key):
+                        modified_books.add(b)
+                        collection.update_one({"_id": existing_book["_id"]}, {"$set": {key: getattr(b, key)}})
+
+                        new_log_content = f"Change detected for book id : {existing_book['_id']}. field '{key}' : {existing_book[key]} -> {getattr(b, key)}"
+                        new_log = Log(timestamp=datetime.datetime.now().__str__(), content=new_log_content)
+                        logs.insert_one(new_log.model_dump())
+                    pass
+                pass
+
+        # return new_books, modified_books
+        
 
 
 if __name__ == "__main__":
+    load_env()
     my_db = MyMongoDB(username="brinto", password="Brinto_says_%22Hi_There%22", cluster="cluster0.uy9kta3")
     my_db.insert_data_to_database()
