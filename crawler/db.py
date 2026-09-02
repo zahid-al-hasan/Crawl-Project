@@ -46,6 +46,7 @@ class MyMongoDB():
         else:
             print("Oops, need to investigate!\n")
 
+        await crawler.client.aclose()
 
 
     async def detect_changes_in_website(self):
@@ -92,6 +93,7 @@ class MyMongoDB():
                     pass
                 pass
 
+        await crawler.client.aclose()
         # return new_books, modified_books
         
 

@@ -157,6 +157,8 @@ async def test_crawler():
     all_book_data = await book_collecting_task
     print(len(all_book_data))
 
+    await crawler.client.aclose()
+
 
 if __name__ == "__main__":
     asyncio.run(test_crawler())
