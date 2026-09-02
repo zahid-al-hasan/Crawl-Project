@@ -17,7 +17,7 @@ class MyScheduler:
         pass
 
 
-    async def run_scheduler(self, my_db: MyMongoDB, interval_hours: float = 1/12) -> None:
+    async def run_scheduler(self, my_db: MyMongoDB, interval_hours: float = 24) -> None:
         scheduler = AsyncIOScheduler()
         scheduler.add_job(
             my_db.detect_changes_in_website,

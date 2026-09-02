@@ -155,7 +155,7 @@ async def test_crawler():
     # print(f"Showing {max_books_per_page} books among {all_books_count} books. There are {total_pages} pages in total.\n")
 
     all_book_data = await book_collecting_task
-    print(len(all_book_data))
+    print(f"{len(all_book_data)} book information retrieved.")
 
     await crawler.client.aclose()
 
