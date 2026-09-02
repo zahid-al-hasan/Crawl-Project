@@ -1,14 +1,16 @@
-import os, sys, apscheduler
+import os, sys, httpx, asyncio
 from datetime import datetime
 
-from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_EXECUTED
-from apscheduler.schedulers.blocking import BlockingScheduler
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from crawler.db import *
-from crawler.scraper import *
+from crawler.db import MyMongoDB
+# from crawler.scraper import *
 from utils.env_utils import load_env
+
+
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 class MyScheduler:
@@ -16,29 +18,25 @@ class MyScheduler:
         pass
 
 
-    def job_listener(self, event):
-        if event.exception:
-            print(f"Scheduler run failed: {event.exception}")
-            return
-
-
-    def run_scheduler(self, my_db: MyMongoDB, interval_hours: float = 0.0125) -> None:
-        scheduler = BlockingScheduler()
+    async def run_scheduler(self, my_db: MyMongoDB, interval_hours: float = 24) -> None:
+        scheduler = AsyncIOScheduler()
         scheduler.add_job(
             my_db.detect_changes_in_website,
             "interval",
             hours=interval_hours,
-            next_run_time=datetime.datetime.now()
+            next_run_time=datetime.now()
         )
-        # scheduler.add_listener(job_listener, EVENT_JOB_EXECUTED | EVENT_JOB_ERROR)
         print(f"Scheduler starting. Checking every {interval_hours:g} hour(s). Press Ctrl+C to stop.")
         scheduler.start()
 
+        try:
+            await asyncio.Event().wait()
+        except (KeyboardInterrupt, asyncio.CancelledError):
+            scheduler.shutdown()
 
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-if __name__ == "__main__":
+async def test_scheduler():
     load_env()
 
     username = os.getenv("UNAME")
@@ -47,4 +45,8 @@ if __name__ == "__main__":
     my_db = MyMongoDB(username, password, cluster)
 
     scheduler = MyScheduler()
-    scheduler.run_scheduler(my_db)
+    await scheduler.run_scheduler(my_db)
+
+
+if __name__ == "__main__":
+    asyncio.run(test_scheduler())

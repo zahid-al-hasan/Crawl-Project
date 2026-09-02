@@ -137,14 +137,13 @@ async def collect_all_book_data(crawler: MyCrawler) -> list[Book]:
 
     end_time = time.time()
 
-    print(f"\n{'*'*10} Took around {(end_time - start_time):.3f} seconds to crawl. {'*'*10}\n")
+    print(f"\n{'*'*10} Finished at {end_time}. Took around {(end_time - start_time):.3f} seconds to crawl. {'*'*10}\n")
     return all_book_data
 
 
 
-async def main_func():
-    async_client = httpx.AsyncClient()
-    crawler = MyCrawler(async_client)
+async def test_crawler():
+    crawler = MyCrawler(httpx.AsyncClient())
 
     index_soup_task = asyncio.create_task(crawler.get_soup(index_url))
     book_collecting_task = asyncio.create_task(collect_all_book_data(crawler))
@@ -161,4 +160,4 @@ async def main_func():
 
 
 if __name__ == "__main__":
-    asyncio.run(main_func())
+    asyncio.run(test_crawler())

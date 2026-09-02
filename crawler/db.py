@@ -1,13 +1,11 @@
 from urllib.parse import quote_plus
-import os, sys, pymongo, datetime
+import os, sys, pymongo, httpx
 from pymongo import MongoClient
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.env_utils import load_env
 
-from crawler.scraper import MyCrawler, collect_all_book_data, guarded
-from pydantic import BaseModel
-
+from crawler.scraper import *
 
 class Log(BaseModel):
     timestamp : str
@@ -27,15 +25,15 @@ class MyMongoDB():
         pass
 
 
-    def insert_all_data_to_database(self) -> None:
+    async def insert_data_to_database(self) -> None:
         DB = os.getenv("DEFAULT_DB")
         COLLECTION = os.getenv("DEFAULT_COLLECTION")
 
         db = self.client[DB]
         collection = self.client[DB][COLLECTION]
 
-        crawler = MyCrawler()
-        all_book_data = collect_all_book_data(crawler)
+        crawler = MyCrawler(httpx.AsyncClient())
+        all_book_data = await collect_all_book_data(crawler)
         collection.insert_many([book.model_dump() for book in all_book_data])
 
         print(f"\n{'*'*30} Insertion done. Let's check something... {'*'*30}\n")
@@ -50,7 +48,7 @@ class MyMongoDB():
 
 
 
-    def detect_changes_in_website(self):
+    async def detect_changes_in_website(self):
         DB = os.getenv("DEFAULT_DB")
         COLLECTION = os.getenv("DEFAULT_COLLECTION")
         LOG = os.getenv("LOG_COLLECTION")
@@ -61,8 +59,8 @@ class MyMongoDB():
 
         existing_url_set = set(collection.distinct("metadata.source_url"))
 
-        crawler = MyCrawler()
-        all_book_data = collect_all_book_data(crawler)
+        crawler = MyCrawler(httpx.AsyncClient())
+        all_book_data = await collect_all_book_data(crawler)
 
         new_books = [b for b in all_book_data if b.metadata.source_url not in existing_url_set]
         for book_data in new_books:
@@ -98,11 +96,16 @@ class MyMongoDB():
         
 
 
-if __name__ == "__main__":
+async def test_db():
     load_env()
 
     username = os.getenv("UNAME")
     password = os.getenv("PASS")
     cluster = os.getenv("CLUSTER")
     my_db = MyMongoDB(username, password, cluster)
-    my_db.insert_all_data_to_database()
+    await my_db.insert_data_to_database()
+
+
+
+if __name__ == "__main__":
+    asyncio.run(test_db())
