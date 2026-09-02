@@ -25,7 +25,7 @@ class MyScheduler:
     def run_scheduler(self, my_db: MyMongoDB, interval_hours: float = 0.0125) -> None:
         scheduler = BlockingScheduler()
         scheduler.add_job(
-            my_db.detect_changes,
+            my_db.detect_changes_in_website,
             "interval",
             hours=interval_hours,
             next_run_time=datetime.datetime.now()

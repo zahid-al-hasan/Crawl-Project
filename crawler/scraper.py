@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-import requests, datetime, os, sys
+import requests, datetime, os, sys, time, httpx, asyncio
 from pydantic import BaseModel
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -53,17 +53,18 @@ class Book(BaseModel):
 
 
 class MyCrawler():
-    def __init__(self):
+    def __init__(self, client: httpx.AsyncClient):
+        self.client = client
         pass
 
 
-    def get_soup(self, webpage_link: str, parser: str = 'lxml'):
-        response = requests.get(webpage_link)
-        return BeautifulSoup(response.text, parser), response.status_code, response.url
+    async def get_soup(self, webpage_link: str, parser: str = 'lxml'):
+        response = await self.client.get(webpage_link)
+        return BeautifulSoup(response.text, parser), response.status_code, str(response.url)
 
 
-    def extract_book_links_from_a_webpage(self, page_link: str) -> list[str]:
-        page_soup = self.get_soup(page_link)[0]
+    async def extract_book_links_from_a_webpage(self, page_link: str):
+        page_soup = (await self.get_soup(page_link))[0]
         all_books = page_soup.find('ol', class_='row').find_all('li')
         book_links = []
         
@@ -71,11 +72,11 @@ class MyCrawler():
             link = book.find('h3').find('a')['href']
             book_links.append(urljoin(page_link, link))
 
-        return book_links
+        return page_soup, book_links
 
 
-    def get_book_data_from_book_link(self, book_link: str) -> Book:
-        book_soup, status, url = self.get_soup(book_link)
+    async def get_book_data_from_book_link(self, book_link: str) -> Book:
+        book_soup, status, url = await self.get_soup(book_link)
         other_product_info = guarded(lambda: book_soup.find('table').find_all('tr'))
 
         book = Book(
@@ -102,34 +103,62 @@ class MyCrawler():
 
 
 # A function for collecting all the book data
-def collect_all_book_data(crawler: MyCrawler) -> list[Book]:  
+async def collect_all_book_data(crawler: MyCrawler) -> list[Book]:  
     all_book_data = []
-    pages_to_work_with = 1
-    for page_number in range(pages_to_work_with):
-        print(f"\nCurrently Working with page {page_number + 1} : \n")
-        current_page_link = initial_link_for_books + f"page-{page_number + 1}.html"
-        book_links = crawler.extract_book_links_from_a_webpage(current_page_link)
-        for book_link in book_links:
-            book = crawler.get_book_data_from_book_link(book_link)
-            all_book_data.append(book)
+    page_link = os.getenv("INITIAL_URL") + "page-1.html"
+    start_time = time.time()
 
-        print(f"\nExtracted all book data from page {page_number + 1}")
-        print("="*60)
+    # pages_to_work_with = 3
 
+    while True:
+        page_soup, book_links = await crawler.extract_book_links_from_a_webpage(page_link)
+        books_per_page = await asyncio.gather(*(crawler.get_book_data_from_book_link(book_link) for book_link in book_links))
+        all_book_data.extend(books_per_page)
+
+        next_page_availabe = page_soup.find('li', class_='next')
+        if next_page_availabe is None:
+            break
+
+        page_link = os.getenv("INITIAL_URL") + next_page_availabe.find('a')['href']
+        # print(f"next page to crawl : {page_link}")
+        pass
+
+    
+    # all_page_links = [(initial_link_for_books + f"page-{page_number + 1}.html") for page_number in range(pages_to_work_with)]
+    
+    # book_links_per_page = await asyncio.gather(*(crawler.extract_book_links_from_a_webpage(page_link) for page_link in all_page_links))
+    # book_links = []
+    # for page in book_links_per_page:
+    #     for book_link in page:
+    #         book_links.append(book_link)
+
+
+    print("="*60)
+
+    end_time = time.time()
+
+    print(f"\n{'*'*10} Took around {(end_time - start_time):.3f} seconds to crawl. {'*'*10}\n")
     return all_book_data
 
 
 
-if __name__ == "__main__":
-    crawler = MyCrawler()
+async def main_func():
+    async_client = httpx.AsyncClient()
+    crawler = MyCrawler(async_client)
 
-    index_soup = crawler.get_soup(index_url)[0]
+    index_soup_task = asyncio.create_task(crawler.get_soup(index_url))
+    book_collecting_task = asyncio.create_task(collect_all_book_data(crawler))
+
+    index_soup = (await index_soup_task)[0]
+
     all_books_count = int(index_soup.find('form').find_all('strong')[0].text)
     max_books_per_page =  int(index_soup.find('form').find_all('strong')[2].text)
     total_pages = int(index_soup.find('ul', class_='pager').find('li').text.replace("\n", '').strip().split(' ')[-1])
-    print(f"Showing {max_books_per_page} books among {all_books_count} books. There are {total_pages} pages in total.\n")
+    # print(f"Showing {max_books_per_page} books among {all_books_count} books. There are {total_pages} pages in total.\n")
 
-    all_book_data = collect_all_book_data(crawler)
-    for book in all_book_data:
-        print(book)
-        print()
+    all_book_data = await book_collecting_task
+    print(len(all_book_data))
+
+
+if __name__ == "__main__":
+    asyncio.run(main_func())

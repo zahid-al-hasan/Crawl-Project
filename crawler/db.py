@@ -1,11 +1,13 @@
 from urllib.parse import quote_plus
-import os, sys, pymongo
+import os, sys, pymongo, datetime
 from pymongo import MongoClient
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.env_utils import load_env
 
-from crawler.scraper import *
+from crawler.scraper import MyCrawler, collect_all_book_data, guarded
+from pydantic import BaseModel
+
 
 class Log(BaseModel):
     timestamp : str
@@ -25,7 +27,7 @@ class MyMongoDB():
         pass
 
 
-    def insert_data_to_database(self) -> None:
+    def insert_all_data_to_database(self) -> None:
         DB = os.getenv("DEFAULT_DB")
         COLLECTION = os.getenv("DEFAULT_COLLECTION")
 
@@ -48,7 +50,7 @@ class MyMongoDB():
 
 
 
-    def detect_changes(self):
+    def detect_changes_in_website(self):
         DB = os.getenv("DEFAULT_DB")
         COLLECTION = os.getenv("DEFAULT_COLLECTION")
         LOG = os.getenv("LOG_COLLECTION")
@@ -103,4 +105,4 @@ if __name__ == "__main__":
     password = os.getenv("PASS")
     cluster = os.getenv("CLUSTER")
     my_db = MyMongoDB(username, password, cluster)
-    my_db.insert_data_to_database()
+    my_db.insert_all_data_to_database()
