@@ -28,7 +28,6 @@ index_url = os.getenv("INDEX_URL")
 initial_link_for_books = os.getenv("INITIAL_URL")
 
 
-
 class BookMetadata(BaseModel):
     timestamp : str
     status : int
@@ -137,7 +136,7 @@ async def collect_all_book_data(crawler: MyCrawler) -> list[Book]:
 
     end_time = time.time()
 
-    print(f"\n{'*'*10} Finished at {end_time}. Took around {(end_time - start_time):.3f} seconds to crawl. {'*'*10}\n")
+    print(f"\n{'*'*10} Finished at {datetime.datetime.now()}. Took around {(end_time - start_time):.3f} seconds to crawl. {'*'*10}\n")
     return all_book_data
 
 

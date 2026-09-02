@@ -1,11 +1,11 @@
 from urllib.parse import quote_plus
-import os, sys, pymongo, httpx
+import os, sys, pymongo, httpx, datetime, asyncio
 from pymongo import MongoClient
-
+from pydantic import BaseModel
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.env_utils import load_env
 
-from crawler.scraper import *
+from crawler.scraper import MyCrawler, collect_all_book_data, guarded
 
 class Log(BaseModel):
     timestamp : str

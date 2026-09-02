@@ -6,7 +6,6 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from crawler.db import MyMongoDB
-# from crawler.scraper import *
 from utils.env_utils import load_env
 
 
@@ -18,7 +17,7 @@ class MyScheduler:
         pass
 
 
-    async def run_scheduler(self, my_db: MyMongoDB, interval_hours: float = 24) -> None:
+    async def run_scheduler(self, my_db: MyMongoDB, interval_hours: float = 1/12) -> None:
         scheduler = AsyncIOScheduler()
         scheduler.add_job(
             my_db.detect_changes_in_website,
