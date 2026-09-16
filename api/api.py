@@ -11,7 +11,7 @@ from bson.objectid import ObjectId
 
 load_env()
 
-my_db = MyMongoDB(username="brinto", password="Brinto_says_%22Hi_There%22", cluster="cluster0.uy9kta3")
+my_db = MyMongoDB(username=os.getenv("UNAME"), password=os.getenv("PASS"), cluster=os.getenv("CLUSTER"))
 db = my_db.client[os.getenv("DEFAULT_DB")]
 collection = db[os.getenv("DEFAULT_COLLECTION")]
 
